@@ -363,7 +363,7 @@ module Paperclip
     end
 
   # ActiveRecord scope that can be used to avoid loading blob columns
-    def select_without_file_columns_for names[]
+    def select_without_file_columns_for names
       unless attachment_definitions[name][:storage] == :database
         raise PaperclipError.new("select_without_file_columns_for is only defined when :storage => :database is specified")
       end
