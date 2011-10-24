@@ -132,7 +132,8 @@ module Paperclip
         if @queued_for_write[style]
           @queued_for_write[style]
         elsif exists?(style)
-          tempfile = Tempfile.new instance_read(:file_name)
+          tempfile = Tempfile.new instance_read(:file_name)   
+          tempfile.binmode
           tempfile.write file_contents(style)
           tempfile
         else
