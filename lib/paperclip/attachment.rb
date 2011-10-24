@@ -222,8 +222,8 @@ module Paperclip
     def reprocess!
       new_original = Tempfile.new(["paperclip-reprocess", '.jpg'])  
       new_original.binmode
-      if old_original = to_file(:original)
-        new_original.write( old_original.respond_to?(:get) ? old_original.get : old_original.read )
+      if old_original = data(:original)
+        new_original << old_original
         new_original.rewind
 
         @queued_for_write = { :original => new_original }
