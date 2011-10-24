@@ -220,7 +220,7 @@ module Paperclip
     # thumbnails forcefully, by reobtaining the original file and going through
     # the post-process again.
     def reprocess!
-      new_original = Tempfile.new(["paperclip-reprocess", '.jpg'])  
+      new_original = Tempfile.new(["paperclip-reprocess", '.jpg'])
       new_original.binmode
       if old_original = data(:original)
         new_original << old_original
@@ -230,6 +230,8 @@ module Paperclip
         post_process
 
         old_original.close if old_original.respond_to?(:close)
+
+        save_styles_to_db
 
         save
       else
@@ -264,84 +266,84 @@ module Paperclip
 
     private
 
-    def ensure_required_accessors! #:nodoc:
-      %w(file_name).each do |field|
-        unless @instance.respond_to?("#{name}_#{field}") && @instance.respond_to?("#{name}_#{field}=")
-          raise PaperclipError.new("#{@instance.class} model missing required attr_accessor for '#{name}_#{field}'")
-        end
-      end
-    end
-
-    def log message #:nodoc:
-      Paperclip.log(message)
-    end
-
-    def valid_assignment? file #:nodoc:
-      file.nil? || (file.respond_to?(:original_filename) && file.respond_to?(:content_type))
-    end
-
-    def initialize_storage #:nodoc:
-      storage_class_name = @storage.to_s.capitalize
-      begin
-        @storage_module = Paperclip::Storage.const_get(storage_class_name)
-      rescue NameError
-        raise StorageMethodNotFound, "Cannot load storage module '#{storage_class_name}'"
-      end
-      self.extend(@storage_module)
-    end
-
-    def extra_options_for(style) #:nodoc:
-      all_options   = convert_options[:all]
-      all_options   = all_options.call(instance)   if all_options.respond_to?(:call)
-      style_options = convert_options[style]
-      style_options = style_options.call(instance) if style_options.respond_to?(:call)
-
-      [ style_options, all_options ].compact.join(" ")
-    end
-
-    def post_process #:nodoc:
-      return if @queued_for_write[:original].nil?
-      instance.run_paperclip_callbacks(:post_process) do
-        instance.run_paperclip_callbacks(:"#{name}_post_process") do
-          post_process_styles
-        end
-      end
-    end
-
-    def post_process_styles #:nodoc:
-      styles.each do |name, style|
-        begin
-          raise RuntimeError.new("Style #{name} has no processors defined.") if style.processors.blank?
-          @queued_for_write[name] = style.processors.inject(@queued_for_write[:original]) do |file, processor|
-            Paperclip.processor(processor).make(file, style.processor_options, self)
+      def ensure_required_accessors! #:nodoc:
+        %w(file_name).each do |field|
+          unless @instance.respond_to?("#{name}_#{field}") && @instance.respond_to?("#{name}_#{field}=")
+            raise PaperclipError.new("#{@instance.class} model missing required attr_accessor for '#{name}_#{field}'")
           end
-        rescue PaperclipError => e
-          log("An error was received while processing: #{e.inspect}")
-          (@errors[:processing] ||= []) << e.message if @whiny
         end
       end
-    end
 
-    def interpolate pattern, style_name = default_style #:nodoc:
-      Paperclip::Interpolations.interpolate(pattern, self, style_name)
-    end
-
-    def queue_existing_for_delete #:nodoc:
-      return unless file?
-      @queued_for_delete += [:original, *styles.keys].uniq.map do |style|
-        path(style) if exists?(style)
-      end.compact
-      instance_write(:file_name, nil)
-      instance_write(:content_type, nil)
-      instance_write(:file_size, nil)
-      instance_write(:updated_at, nil)
-    end
-
-    def flush_errors #:nodoc:
-      @errors.each do |error, message|
-        [message].flatten.each {|m| instance.errors.add(name, m) }
+      def log message #:nodoc:
+        Paperclip.log(message)
       end
-    end
+
+      def valid_assignment? file #:nodoc:
+        file.nil? || (file.respond_to?(:original_filename) && file.respond_to?(:content_type))
+      end
+
+      def initialize_storage #:nodoc:
+        storage_class_name = @storage.to_s.capitalize
+        begin
+          @storage_module = Paperclip::Storage.const_get(storage_class_name)
+        rescue NameError
+          raise StorageMethodNotFound, "Cannot load storage module '#{storage_class_name}'"
+        end
+        self.extend(@storage_module)
+      end
+
+      def extra_options_for(style) #:nodoc:
+        all_options   = convert_options[:all]
+        all_options   = all_options.call(instance)   if all_options.respond_to?(:call)
+        style_options = convert_options[style]
+        style_options = style_options.call(instance) if style_options.respond_to?(:call)
+
+        [ style_options, all_options ].compact.join(" ")
+      end
+
+      def post_process #:nodoc:
+        return if @queued_for_write[:original].nil?
+        instance.run_paperclip_callbacks(:post_process) do
+          instance.run_paperclip_callbacks(:"#{name}_post_process") do
+            post_process_styles
+          end
+        end
+      end
+
+      def post_process_styles #:nodoc:
+        styles.each do |name, style|
+          begin
+            raise RuntimeError.new("Style #{name} has no processors defined.") if style.processors.blank?
+            @queued_for_write[name] = style.processors.inject(@queued_for_write[:original]) do |file, processor|
+              Paperclip.processor(processor).make(file, style.processor_options, self)
+            end
+          rescue PaperclipError => e
+            log("An error was received while processing: #{e.inspect}")
+            (@errors[:processing] ||= []) << e.message if @whiny
+          end
+        end
+      end
+
+      def interpolate pattern, style_name = default_style #:nodoc:
+        Paperclip::Interpolations.interpolate(pattern, self, style_name)
+      end
+
+      def queue_existing_for_delete #:nodoc:
+        return unless file?
+        @queued_for_delete += [:original, *styles.keys].uniq.map do |style|
+          path(style) if exists?(style)
+        end.compact
+        instance_write(:file_name, nil)
+        instance_write(:content_type, nil)
+        instance_write(:file_size, nil)
+        instance_write(:updated_at, nil)
+      end
+
+      def flush_errors #:nodoc:
+        @errors.each do |error, message|
+          [message].flatten.each {|m| instance.errors.add(name, m) }
+        end
+      end
 
   end
 end
