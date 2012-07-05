@@ -291,34 +291,34 @@ module Paperclip
     # in the paperclip:refresh rake task and that's it. It will regenerate all
     # thumbnails forcefully, by reobtaining the original file and going through
     # the post-process again.
-# <<<<<<< HEAD
-#     def reprocess!
-#       new_original = Tempfile.new(["paperclip-reprocess", '.jpg'])
-#       new_original.binmode
-#       if old_original = data(:original)
-#         new_original << old_original
-#         new_original.rewind
-# 
-#         @queued_for_write = { :original => new_original }
-#         post_process
-# 
-#         old_original.close if old_original.respond_to?(:close)
-# 
-#         save_styles_to_db
-# 
-# ======= 
+
     def reprocess!(*style_args)
-      saved_only_process, @options[:only_process] = @options[:only_process], style_args
-      begin
-        assign(self)
-        save
-      rescue Errno::EACCES => e
-        warn "#{e} - skipping file."
-        false
-      ensure
-        @options[:only_process] = saved_only_process
+      new_original = Tempfile.new(["paperclip-reprocess", '.jpg'])
+      new_original.binmode
+      if old_original = data(:original)
+        new_original << old_original
+        new_original.rewind
+
+        @queued_for_write = { :original => new_original }
+        post_process
+
+        old_original.close if old_original.respond_to?(:close)
+
+        save_styles_to_db
       end
-    end
+    end 
+    # def reprocess!(*style_args)
+    #   saved_only_process, @options[:only_process] = @options[:only_process], style_args
+    #   begin
+    #     assign(self)
+    #     save
+    #   rescue Errno::EACCES => e
+    #     warn "#{e} - skipping file."
+    #     false
+    #   ensure
+    #     @options[:only_process] = saved_only_process
+    #   end
+    # end 
 
     # Returns true if a file has been assigned.
     def file?
@@ -351,6 +351,10 @@ module Paperclip
       cached = self.instance_variable_get("@_#{getter}")
       return cached if cached
       instance.send(getter) if responds || attr.to_s == "file_name"
+    end  
+    
+    def to_file
+      Paperclip.io_adapters.for(self)
     end
 
     private
@@ -503,6 +507,8 @@ module Paperclip
     # Check if attachment database table has a created_at field which is not yet set
     def has_enabled_but_unset_created_at?
       able_to_store_created_at? && !instance_read(:created_at)
-    end
+    end   
+    
+     
   end
 end
