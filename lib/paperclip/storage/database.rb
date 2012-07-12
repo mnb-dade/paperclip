@@ -111,7 +111,6 @@ module Paperclip
 
       def instance_write_file(style, value)
         setter = :"#{column_for_style(style)}="
-        Rails.logger.debug("SETTING : #{setter}")
         responds = instance.respond_to?(setter)
         self.instance_variable_set("@_#{setter.to_s.chop}", value)
         instance.send(setter, value) if responds
@@ -173,15 +172,15 @@ module Paperclip
         end
       end
 
-      def queue_existing_for_delete      
-        # DMH Edit, do we really need this?
-        # [:original, *@options[:styles].keys].uniq.each do |style|
-        #          instance_write_file(style, nil)
-        #        end 
-        # instance_write(:file_name, nil)
-        #   instance_write(:content_type, nil)
-        #   instance_write(:file_size, nil)
-        #   instance_write(:updated_at, nil) 
+      def queue_all_for_delete
+        @queued_for_delete += [:original, *styles.keys].uniq.map do |style|
+          instance_write_file(style,nil)
+        end.compact
+
+        instance_write(:file_name, nil)
+        instance_write(:content_type, nil)
+        instance_write(:file_size, nil)
+        instance_write(:updated_at, nil)
       end
 
       def flush_writes
