@@ -105,10 +105,10 @@ module Paperclip
         cached = self.instance_variable_get("@_#{column}")
         return cached if cached
         # The blob attribute will not be present if select_without_file_columns_for was used
-        Rails.cache.fetch key_for_style(style), :compress => true, :expires_in => 6.hours do   
-          instance.reload :select => column if !instance.attribute_present?(column) && !instance.new_record?
-          instance.send(column) if responds
-        end
+        # Rails.cache.fetch key_for_style(style), :compress => true, :expires_in => 6.hours do
+        instance.reload :select => column if !instance.attribute_present?(column) && !instance.new_record?
+        instance.send(column) if responds
+        # end
       end
 
       def key_for_style(style)
@@ -119,7 +119,7 @@ module Paperclip
         setter = :"#{column_for_style(style)}="
         responds = instance.respond_to?(setter)
         self.instance_variable_set("@_#{setter.to_s.chop}", value)
-        Rails.cache.write key_for_style(style), value, :compress => true, :expires_in => 6.hours
+        #Rails.cache.write key_for_style(style), value, :compress => true, :expires_in => 6.hours
         instance.send(setter, value) if responds
       end
 
