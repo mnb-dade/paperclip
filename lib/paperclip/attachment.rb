@@ -300,7 +300,7 @@ module Paperclip
         new_original.rewind
 
         @queued_for_write = { :original => new_original }
-        post_process
+        post_process(*style_args)
 
         old_original.close if old_original.respond_to?(:close)
 
