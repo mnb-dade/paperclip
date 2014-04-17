@@ -23,7 +23,7 @@ module Paperclip
 
     module Running
       def run_paperclip_callbacks(callback, opts = nil, &block)
-        run_callbacks(callback, opts, &block)
+        run_callbacks(callback, &block)
       end
     end
   end
