@@ -11,10 +11,10 @@ module Paperclip
         callbacks.each do |callback|
           eval <<-end_callbacks
             def before_#{callback}(*args, &blk)
-              set_callback(:#{callback}, :before, &blk)
+              set_callback(:#{callback}, :before, *args, &blk)
             end
             def after_#{callback}(*args, &blk)
-              set_callback(:#{callback}, :after, &blk)
+              set_callback(:#{callback}, :after, *args, &blk)
             end
           end_callbacks
         end

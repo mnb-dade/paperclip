@@ -300,13 +300,13 @@ module Paperclip
         new_original.rewind
 
         @queued_for_write = { :original => new_original }
-        post_process(*style_args)
+        post_process_styles(*style_args)
 
         old_original.close if old_original.respond_to?(:close)
 
         save_styles_to_db
       end
-    end 
+    end
     # def reprocess!(*style_args)
     #   saved_only_process, @options[:only_process] = @options[:only_process], style_args
     #   begin
@@ -318,7 +318,7 @@ module Paperclip
     #   ensure
     #     @options[:only_process] = saved_only_process
     #   end
-    # end 
+    # end
 
     # Returns true if a file has been assigned.
     def file?
@@ -351,8 +351,8 @@ module Paperclip
       cached = self.instance_variable_get("@_#{getter}")
       return cached if cached
       instance.send(getter) if responds || attr.to_s == "file_name"
-    end  
-    
+    end
+
     def to_file
       Paperclip.io_adapters.for(self)
     end
@@ -446,7 +446,7 @@ module Paperclip
       rescue Paperclip::Error => e
         log("An error was received while processing: #{e.inspect}")
         (@errors[:processing] ||= []) << e.message if @options[:whiny]
-      end 
+      end
     end
 
     def process_style?(style_name, style_args) #:nodoc:
@@ -507,8 +507,8 @@ module Paperclip
     # Check if attachment database table has a created_at field which is not yet set
     def has_enabled_but_unset_created_at?
       able_to_store_created_at? && !instance_read(:created_at)
-    end   
-    
-     
+    end
+
+
   end
 end
