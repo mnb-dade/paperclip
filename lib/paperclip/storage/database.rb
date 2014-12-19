@@ -101,14 +101,12 @@ module Paperclip
 
       def instance_read_file(style)
         column = column_for_style(style)
-        responds = instance.respond_to?(column)
         cached = self.instance_variable_get("@_#{column}")
         return cached if cached
+
         # The blob attribute will not be present if select_without_file_columns_for was used
-        # Rails.cache.fetch key_for_style(style), :compress => true, :expires_in => 6.hours do
-        instance.reload :select => column if !instance.attribute_present?(column) && !instance.new_record?
-        instance.send(column) if responds
-        # end
+        instance.class.unscoped { instance.reload :select => column } unless instance.new_record?
+        instance.send(column) if instance.respond_to?(column)
       end
 
       def key_for_style(style)
